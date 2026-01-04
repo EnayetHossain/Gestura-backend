@@ -12,7 +12,7 @@ export const uploadUpdatedInstaller = async (req: Request, res: Response, next: 
     if (!version) throw new ApiError(401, "Version number must be provided")
     if (!req.file) throw new ApiError(401, "Installer file missing")
 
-    const reletivePath = path.join("public", "uploads", req.file.filename)
+    // NOTE: removed these code temporarily untill I get an paid storage service
 
     // const filePath = path.join("public/uploads", req.file.filename);
     // const fileBuffer = fs.readFileSync(filePath)
@@ -29,11 +29,13 @@ export const uploadUpdatedInstaller = async (req: Request, res: Response, next: 
 
     // const publicUrl = supabase.storage.from(config.bucket_name).getPublicUrl(`GesturaInstaller/${fileName}`).data.publicUrl;
 
+    const publicUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+
     const createdVersion = await Update.create({
       version,
       description,
       releaseDate,
-      fileUrl: reletivePath
+      fileUrl: publicUrl
     });
 
     res.status(201).json(new ApiResponse("success", createdVersion))
