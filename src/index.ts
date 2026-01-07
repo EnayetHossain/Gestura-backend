@@ -2,7 +2,6 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import config from '@config/config';
 import { errorHandler } from '@middlewares/errorHandler.middleware';
-import itemRouter from '@routes/item.route';
 import uploadRouter from '@routes/installer.route';
 import connectDB from 'db/connect';
 
@@ -16,7 +15,6 @@ app.get('/', (_: Request, res: Response) => {
   res.send('server runnning');
 });
 
-app.use('/api/v1/items', itemRouter);
 app.use("/api/v1/installer", uploadRouter);
 
 app.use(errorHandler);
@@ -28,7 +26,7 @@ const start = async (): Promise<void> => {
       console.log(`Connected to database visit http://localhost:${config.port}`);
     });
   } catch (error) {
-    console.log("can not run the server")
+    console.log("can not run the server: ", error)
   }
 
 };
