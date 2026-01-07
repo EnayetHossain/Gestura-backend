@@ -2,32 +2,13 @@ import { NextFunction, Request, Response } from "express";
 import { ApiResponse } from "@utils/apiResponse";
 import { ApiError } from "@utils/apiError";
 import Update from "@models/update.model";
-import fs from "fs"
-import path from "path";
 
 export const uploadUpdatedInstaller = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { version, description, releaseDate } = req.body;
 
-    if (!version) throw new ApiError(401, "Version number must be provided")
-    if (!req.file) throw new ApiError(401, "Installer file missing")
-
-    // NOTE: removed these code temporarily untill I get an paid storage service
-
-    // const filePath = path.join("public/uploads", req.file.filename);
-    // const fileBuffer = fs.readFileSync(filePath)
-    // const fileName = req.file.filename
-
-    // const { error } = await supabase.storage.from(config.bucket_name).upload(`GesturaInstaller/${fileName}`, fileBuffer, {
-    //   contentType: req.file.mimetype,
-    //   upsert: true,
-    // });
-
-    // fs.unlinkSync(filePath);
-
-    // if (error) throw new ApiError(500, `Error while uploading to supbase: ${error.message}`);
-
-    // const publicUrl = supabase.storage.from(config.bucket_name).getPublicUrl(`GesturaInstaller/${fileName}`).data.publicUrl;
+    if (!version) throw new ApiError(400, "Version number must be provided")
+    if (!req.file) throw new ApiError(400, "Installer file missing")
 
     const publicUrl = `http://localhost:5000/uploads/${req.file.filename}`;
 
@@ -44,7 +25,7 @@ export const uploadUpdatedInstaller = async (req: Request, res: Response, next: 
   }
 }
 
-export const downloadInstaller = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getDownloadURL = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { version } = req.query
 
@@ -53,16 +34,12 @@ export const downloadInstaller = async (req: Request, res: Response, next: NextF
     if (!version || version === "latest") {
       installer = await Update.findOne().sort({ releaseDate: -1 })
     } else {
-      installer = await Update.findOne({ version })
+      installer = await Update.findOne({ version }).exec()
     }
 
-    if (!installer) throw new ApiError(404, "Installer version not found")
+    if (!installer) throw new ApiError(404, `No version found for version ${version}`)
 
-    const absolutePath = path.resolve(installer.fileUrl)
-
-    if (!fs.existsSync(absolutePath)) throw new ApiError(404, "Installer file not found on disk")
-
-    return res.download(absolutePath)
+    res.status(200).json(new ApiResponse("success", installer))
   } catch (error) {
     next(error)
   }
@@ -74,7 +51,7 @@ export const getLatestVersion = async (_: Request, res: Response, next: NextFunc
 
     if (!installer) throw new ApiError(404, "No latest version found");
 
-    res.status(200).json(new ApiResponse("success", installer))
+    res.status(200).json(new ApiResponse("success", installer.version))
   } catch (error) {
     next(error)
   }
